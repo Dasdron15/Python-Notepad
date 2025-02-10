@@ -7,10 +7,12 @@ from platform import system
 # Variables
 text_size = 25
 keys_pressed = set()
+can_save = False
 
 # Functions
 def on_key_press(event):
-    global text_size, keys_pressed
+    global text_size, keys_pressed, can_save
+    can_save = True
     keys_pressed.add(event.keysym)
 
     if "Meta_L" in keys_pressed and "=" in keys_pressed:
@@ -22,7 +24,10 @@ def on_key_press(event):
 
 def on_key_release(event):
     global keys_pressed
-    keys_pressed.remove(event.keysym)
+    try:
+        keys_pressed.remove(event.keysym)
+    except:
+        pass
 
 def file_save():
     text = window_base.get(1.0, "end-1c")
@@ -46,7 +51,7 @@ def open_file():
 
 def on_closing():
     text = window_base.get(1.0, "end-1c")
-    if text != "":
+    if text != "" or can_save:
         if_save = messagebox.askquestion("Save", "Do you want to save this file?")
         if if_save == "yes":
             file_save()
