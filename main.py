@@ -37,8 +37,14 @@ def file_save():
             f.write(text)
 
 def open_file():
-    global window_base
+    global window_base, can_save
     file_path = filedialog.askopenfilename(initialdir="Documents", title="Open file", filetypes=(("Text files", "*.txt"), ("All files", "*.*")))
+
+    if can_save:
+        on_closing(False)
+
+    can_save = False
+
     if file_path:
         with open(file_path, 'r') as file:
             text = file.read()
@@ -49,14 +55,14 @@ def open_file():
             root.title(title)
 
 
-def on_closing():
-    text = window_base.get(1.0, "end-1c")
-    if text != "" or can_save:
+def on_closing(is_close=True):
+    if can_save:
         if_save = messagebox.askquestion("Save", "Do you want to save this file?")
         if if_save == "yes":
             file_save()
 
-    root.destroy()
+    if is_close:
+        root.destroy()
 
 
 def delete_text():
