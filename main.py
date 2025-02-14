@@ -7,12 +7,18 @@ from platform import system
 # Variables
 text_size = 25
 keys_pressed = set()
-can_save = False
+need_save = False
+opened_file = False
 
 # Functions
 def on_key_press(event):
-    global text_size, keys_pressed, can_save
-    can_save = True
+    global text_size, keys_pressed, need_save, opened_file
+    if opened_file and need_save:
+        title = f"{file_name} - Notepad (*)"
+        root.title(title)
+
+    if window_base.get(1.0, "end-1c") != "": # Check if something was written if yes then save
+        need_save = True
     keys_pressed.add(event.keysym)
 
     if "Meta_L" in keys_pressed and "=" in keys_pressed:
@@ -37,13 +43,14 @@ def file_save():
             f.write(text)
 
 def open_file():
-    global window_base, can_save
+    global window_base, need_save, file_name, opened_file
     file_path = filedialog.askopenfilename(initialdir="Documents", title="Open file", filetypes=(("Text files", "*.txt"), ("All files", "*.*")))
 
-    if can_save:
+    if need_save:
         on_closing(False)
 
-    can_save = False
+    need_save = False
+    opened_file = True
 
     if file_path:
         with open(file_path, 'r') as file:
@@ -54,9 +61,8 @@ def open_file():
             title = f"{file_name} - Notepad"
             root.title(title)
 
-
 def on_closing(is_close=True):
-    if can_save:
+    if need_save:
         if_save = messagebox.askquestion("Save", "Do you want to save this file?")
         if if_save == "yes":
             file_save()
@@ -78,7 +84,7 @@ def delete_text():
             window_base.delete(1.0, "end")
 
 # Window settings
-title = "Notepad"
+title = "Untitled - Notepad"
 root = tk.Tk()
 root.geometry("700x500")
 root.title(title)
