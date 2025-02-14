@@ -21,9 +21,17 @@ def on_key_press(event):
         need_save = True
     keys_pressed.add(event.keysym)
 
+    if "Meta_L" in keys_pressed and "s" in keys_pressed:
+        title = f"{file_name} - Notepad"
+        root.title(title)
+        with open(file_path, "w") as file:
+            file.write(window_base.get(1.0, "end-1c"))
+        need_save = False
+
     if "Meta_L" in keys_pressed and "=" in keys_pressed:
         text_size = min(text_size + 5, 100)
         window_base.config(font=("Arial", text_size))
+
     if "Meta_L" in keys_pressed and "-" in keys_pressed:
         text_size = max(10, text_size - 5)
         window_base.config(font=("Arial", text_size))
@@ -43,7 +51,7 @@ def file_save():
             f.write(text)
 
 def open_file():
-    global window_base, need_save, file_name, opened_file
+    global window_base, need_save, file_name, file_path, opened_file
     file_path = filedialog.askopenfilename(initialdir="Documents", title="Open file", filetypes=(("Text files", "*.txt"), ("All files", "*.*")))
 
     if need_save:
@@ -64,8 +72,12 @@ def open_file():
 def on_closing(is_close=True):
     if need_save:
         if_save = messagebox.askquestion("Save", "Do you want to save this file?")
-        if if_save == "yes":
+        if if_save == "yes" and not opened_file:
             file_save()
+        elif if_save == "yes" and opened_file:
+            with open(file_path, "w") as file:
+                file.write(window_base.get(1.0, "end-1c"))
+        
 
     if is_close:
         root.destroy()
