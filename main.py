@@ -21,18 +21,22 @@ def on_key_press(event):
         need_save = True
     keys_pressed.add(event.keysym)
 
-    if "Meta_L" in keys_pressed and "s" in keys_pressed:
-        title = f"{file_name} - Notepad"
-        root.title(title)
-        with open(file_path, "w") as file:
-            file.write(window_base.get(1.0, "end-1c"))
-        need_save = False
+    if "Meta_L" in keys_pressed or "Control_L" in keys_pressed and "s" in keys_pressed:
+        try:
+            title = f"{file_name} - Notepad"
+            root.title(title)
+            with open(file_path, "w") as file:
+                file.write(window_base.get(1.0, "end-1c"))
+            need_save = False
+        except NameError:
+            file_save()
+            keys_pressed.clear()
 
-    if "Meta_L" in keys_pressed and "=" in keys_pressed:
+    if "Meta_L" in keys_pressed and "=" in keys_pressed or "Control_L" in keys_pressed and "equal" in keys_pressed:
         text_size = min(text_size + 5, 100)
         window_base.config(font=("Arial", text_size))
 
-    if "Meta_L" in keys_pressed and "-" in keys_pressed:
+    if "Meta_L" in keys_pressed and "-" in keys_pressed or "Control_L" in keys_pressed and "minus" in keys_pressed:
         text_size = max(10, text_size - 5)
         window_base.config(font=("Arial", text_size))
 
