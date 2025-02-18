@@ -10,6 +10,7 @@ keys_pressed = set()
 need_save = False
 opened_file = False
 
+
 # Functions
 def on_key_press(event):
     global text_size, keys_pressed, need_save, opened_file
@@ -17,7 +18,9 @@ def on_key_press(event):
         title = f"{file_name} - Notepad (*)"
         root.title(title)
 
-    if window_base.get(1.0, "end-1c") != "": # Check if something was written if yes then save
+    if (
+        window_base.get(1.0, "end-1c") != ""
+    ):  # Check if something was written if yes then save
         need_save = True
     keys_pressed.add(event.keysym)
 
@@ -32,13 +35,24 @@ def on_key_press(event):
             file_save()
             keys_pressed.clear()
 
-    if "Meta_L" in keys_pressed and "=" in keys_pressed or "Control_L" in keys_pressed and "equal" in keys_pressed:
+    if (
+        "Meta_L" in keys_pressed
+        and "=" in keys_pressed
+        or "Control_L" in keys_pressed
+        and "equal" in keys_pressed
+    ):
         text_size = min(text_size + 5, 100)
         window_base.config(font=("Arial", text_size))
 
-    if "Meta_L" in keys_pressed and "-" in keys_pressed or "Control_L" in keys_pressed and "minus" in keys_pressed:
+    if (
+        "Meta_L" in keys_pressed
+        and "-" in keys_pressed
+        or "Control_L" in keys_pressed
+        and "minus" in keys_pressed
+    ):
         text_size = max(10, text_size - 5)
         window_base.config(font=("Arial", text_size))
+
 
 def on_key_release(event):
     global keys_pressed
@@ -47,16 +61,26 @@ def on_key_release(event):
     except:
         pass
 
+
 def file_save():
     text = window_base.get(1.0, "end-1c")
-    file = filedialog.asksaveasfilename(initialdir="Documents", title="Save file", filetypes=(("Text files", "*.txt"), ("All files", "*.*")))
+    file = filedialog.asksaveasfilename(
+        initialdir="Documents",
+        title="Save file",
+        filetypes=(("Text files", "*.txt"), ("All files", "*.*")),
+    )
     if file:
         with open(file, "w") as f:
             f.write(text)
 
+
 def open_file():
     global window_base, need_save, file_name, file_path, opened_file
-    file_path = filedialog.askopenfilename(initialdir="Documents", title="Open file", filetypes=(("Text files", "*.txt"), ("All files", "*.*")))
+    file_path = filedialog.askopenfilename(
+        initialdir="Documents",
+        title="Open file",
+        filetypes=(("Text files", "*.txt"), ("All files", "*.*")),
+    )
 
     if need_save:
         on_closing(False)
@@ -65,13 +89,14 @@ def open_file():
     opened_file = True
 
     if file_path:
-        with open(file_path, 'r') as file:
+        with open(file_path, "r") as file:
             text = file.read()
             window_base.delete(1.0, "end")
             window_base.insert(INSERT, text)
             file_name = os.path.basename(file_path)
             title = f"{file_name} - Notepad"
             root.title(title)
+
 
 def on_closing(is_close=True):
     if need_save:
@@ -81,7 +106,6 @@ def on_closing(is_close=True):
         elif if_save == "yes" and opened_file:
             with open(file_path, "w") as file:
                 file.write(window_base.get(1.0, "end-1c"))
-        
 
     if is_close:
         root.destroy()
@@ -98,6 +122,7 @@ def delete_text():
             window_base.delete(1.0, "end")
         elif if_save == "no":
             window_base.delete(1.0, "end")
+
 
 # Window settings
 title = "Untitled - Notepad"
