@@ -1,160 +1,111 @@
 import tkinter as tk
-from tkinter import messagebox, filedialog, INSERT
+from tkinter import messagebox, filedialog
 import os
 import ctypes
 from platform import system
 
-# Variables
-text_size = 25
-keys_pressed = set()
-need_save = False
-opened_file = False
+
+class Notepad:
+    def __init__(self, root):
+        self.root = root
+        self.text_size = 25
+        self.file_path = None
+        self.need_save = False
+
+        self.root.title("Untitled - Notepad")
+        self.root.geometry("700x500")
+
+        if system() == "Windows":
+            ctypes.windll.shcore.SetProcessDpiAwareness(1)
+
+        self.text_area = tk.Text(root, font=("Arial", self.text_size))
+        self.text_area.pack(expand=True, fill=tk.BOTH)
+        self.text_area.bind("<KeyPress>", self.on_key_press)
+        self.text_area.bind("<KeyRelease>", self.on_key_release)
+
+        self.create_menu()
+        self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
+
+    def create_menu(self):
+        menubar = tk.Menu(self.root)
+        file_menu = tk.Menu(menubar, tearoff=0)
+        file_menu.add_command(label="New", command=self.new_file)
+        file_menu.add_command(label="Open", command=self.open_file)
+        file_menu.add_command(label="Save", command=self.save_file)
+        file_menu.add_command(label="Save As", command=self.save_file_as)
+        file_menu.add_separator()
+        file_menu.add_command(label="Exit", command=self.on_closing)
+        menubar.add_cascade(label="File", menu=file_menu)
+        self.root.config(menu=menubar)
+
+    def new_file(self):
+        if self.need_save and not self.confirm_discard_changes():
+            return
+        self.text_area.delete(1.0, tk.END)
+        self.file_path = None
+        self.root.title("Untitled - Notepad")
+        self.need_save = False
+
+    def open_file(self):
+        if self.need_save and not self.confirm_discard_changes():
+            return
+        file_path = filedialog.askopenfilename(
+            filetypes=[("Text files", "*.txt"), ("All files", "*.*")]
+        )
+        if file_path:
+            with open(file_path, "r") as file:
+                self.text_area.delete(1.0, tk.END)
+                self.text_area.insert(tk.END, file.read())
+            self.file_path = file_path
+            self.root.title(f"{os.path.basename(file_path)} - Notepad")
+            self.need_save = False
+
+    def save_file(self):
+        if self.file_path:
+            with open(self.file_path, "w") as file:
+                file.write(self.text_area.get(1.0, tk.END))
+            self.need_save = False
+        else:
+            self.save_file_as()
+
+    def save_file_as(self):
+        file_path = filedialog.asksaveasfilename(
+            defaultextension=".txt",
+            filetypes=[("Text files", "*.txt"), ("All files", "*.*")],
+        )
+        if file_path:
+            self.file_path = file_path
+            self.save_file()
+            self.root.title(f"{os.path.basename(file_path)} - Notepad")
+
+    def on_closing(self):
+        if self.need_save:
+            if not self.confirm_discard_changes():
+                return
+        self.root.destroy()
+
+    def confirm_discard_changes(self):
+        return messagebox.askyesno(
+            "Unsaved changes", "You have unsaved changes. Do you want to discard them?"
+        )
+
+    def on_key_press(self, event):
+        print(event.keysym)
+        self.need_save = True
+        if event.state & 4 and event.keysym in {"s", "S"}:
+            self.save_file()
+        if event.state & 4 and event.keysym in {"equal", "plus", "+", "="}:
+            self.text_size = min(self.text_size + 5, 100)
+            self.text_area.config(font=("Arial", self.text_size))
+        if event.state & 4 and event.keysym in {"minus", "-"}:
+            self.text_size = max(10, self.text_size - 5)
+            self.text_area.config(font=("Arial", self.text_size))
+
+    def on_key_release(self, event):
+        return
 
 
-# Functions
-def on_key_press(event):
-    global text_size, keys_pressed, need_save, opened_file
-    if opened_file and need_save:
-        title = f"{file_name} - Notepad (*)"
-        root.title(title)
-
-    if (
-        window_base.get(1.0, "end-1c") != ""
-    ):  # Check if something was written if yes then save
-        need_save = True
-    keys_pressed.add(event.keysym)
-
-    if "Meta_L" in keys_pressed or "Control_L" in keys_pressed and "s" in keys_pressed:
-        try:
-            title = f"{file_name} - Notepad"
-            root.title(title)
-            with open(file_path, "w") as file:
-                file.write(window_base.get(1.0, "end-1c"))
-            need_save = False
-        except NameError:
-            file_save()
-            keys_pressed.clear()
-
-    if (
-        "Meta_L" in keys_pressed
-        and "=" in keys_pressed
-        or "Control_L" in keys_pressed
-        and "equal" in keys_pressed
-    ):
-        text_size = min(text_size + 5, 100)
-        window_base.config(font=("Arial", text_size))
-
-    if (
-        "Meta_L" in keys_pressed
-        and "-" in keys_pressed
-        or "Control_L" in keys_pressed
-        and "minus" in keys_pressed
-    ):
-        text_size = max(10, text_size - 5)
-        window_base.config(font=("Arial", text_size))
-
-
-def on_key_release(event):
-    global keys_pressed
-    try:
-        keys_pressed.remove(event.keysym)
-    except:
-        pass
-
-
-def file_save():
-    text = window_base.get(1.0, "end-1c")
-    file = filedialog.asksaveasfilename(
-        initialdir="Documents",
-        title="Save file",
-        filetypes=(("Text files", "*.txt"), ("All files", "*.*")),
-    )
-    if file:
-        with open(file, "w") as f:
-            f.write(text)
-
-
-def open_file():
-    global window_base, need_save, file_name, file_path, opened_file
-    file_path = filedialog.askopenfilename(
-        initialdir="Documents",
-        title="Open file",
-        filetypes=(("Text files", "*.txt"), ("All files", "*.*")),
-    )
-
-    if need_save:
-        on_closing(False)
-
-    need_save = False
-    opened_file = True
-
-    if file_path:
-        with open(file_path, "r") as file:
-            text = file.read()
-            window_base.delete(1.0, "end")
-            window_base.insert(INSERT, text)
-            file_name = os.path.basename(file_path)
-            title = f"{file_name} - Notepad"
-            root.title(title)
-
-
-def on_closing(is_close=True):
-    if need_save:
-        if_save = messagebox.askquestion("Save", "Do you want to save this file?")
-        if if_save == "yes" and not opened_file:
-            file_save()
-        elif if_save == "yes" and opened_file:
-            with open(file_path, "w") as file:
-                file.write(window_base.get(1.0, "end-1c"))
-
-    if is_close:
-        root.destroy()
-
-
-def delete_text():
-    text = window_base.get(1.0, "end-1c")
-    if text == "":
-        pass
-    else:
-        if_save = messagebox.askquestion("Save", "Do you want to save this file?")
-        if if_save == "yes":
-            file_save()
-            window_base.delete(1.0, "end")
-        elif if_save == "no":
-            window_base.delete(1.0, "end")
-
-
-# Window settings
-title = "Untitled - Notepad"
-root = tk.Tk()
-root.geometry("700x500")
-root.title(title)
-
-if system() == "Windows":
-    ctypes.windll.shcore.SetProcessDpiAwareness(1)
-
-# Area where you type your text
-window_base = tk.Text(root, height=300, width=500, font=("Arial", text_size))
-window_base.pack()
-
-# Keybinds
-root.bind("<KeyPress>", on_key_press)
-root.bind("<KeyRelease>", on_key_release)
-
-# Create menubar
-menubar = tk.Menu()
-
-# Menu Bar settings
-file = tk.Menu(menubar, tearoff=0)
-menubar.add_cascade(label="File", menu=file)
-file.add_command(label="New file", command=delete_text)
-file.add_command(label="Open...", command=open_file)
-file.add_command(label="Save as...", command=file_save)
-file.add_separator()
-file.add_command(label="Quit", command=root.destroy)
-
-# Detecting when the window is closed
-root.protocol("WM_DELETE_WINDOW", on_closing)
-
-root.config(menu=menubar)
-root.mainloop()
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = Notepad(root)
+    root.mainloop()
